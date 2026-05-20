@@ -1,84 +1,129 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ulyILqqB)
-# Weekly Coding #9: Midnight Monster Delivery
+# 🎃 Week 11: Midnight Monster Delivery
 
-## Summary
+A spooky implementation of **Dijkstra's shortest-path algorithm** using Python's `heapq` module. Find the cheapest delivery routes through a haunted city — from Crypt Kitchen to Vampire Tower and everywhere in between.
 
-Write 3–6 lines explaining what this program does.
+## Overview
 
-Example starting point:
+This module provides three functions for navigating a weighted directed graph representing a haunted city. All functions use a min-heap priority queue for efficient pathfinding.
 
-This program finds the cheapest delivery routes through a haunted city. Each location is a node, and each haunted road has a positive travel cost. The main algorithm is Dijkstra's algorithm using a heap-based priority queue.
+**Constraints:**
+- Python 3.11+
+- Standard library only (`heapq`, `math`)
+- Edge weights must be positive integers or floats
 
-## Approach
+## The Haunted City Map
 
-Explain your approach in bullets.
-
-- How did you represent the graph?
-- How did you use the priority queue/frontier?
-- How did relaxation work in your solution?
-- How did you reconstruct the final path?
-
-## Complexity
-
-Explain the time and space complexity of your Dijkstra functions.
-
-Suggested format:
-
-```text
-Time complexity: O((V + E) log V), where V is the number of locations and E is the number of roads.
-
-Space complexity: O(V) extra space for distances, previous nodes, and the frontier. If we include graph storage, the total is O(V + E).
+```
+Crypt Kitchen ──(2)──▶ Fog Alley ──(1)──▶ Moon Bridge ──(5)──▶ Werewolf Den
+      │                    │                    │                     │
+     (5)                  (6)                  (3)                   (2)
+      ▼                    ▼                    ▼                     ▼
+ Bone Bridge ──(2)──▶ Goblin Market ◀──────────┘              Vampire Tower
+                            │                                        ▲
+                           (5)                                       │
+                            └────────────────────────────────────────┘
 ```
 
-Now write your own explanation:
+## API Reference
 
-- `monster_delivery_costs`:
-  - Time:
-  - Space:
-  - Why:
+### `validate_haunted_map(graph)`
 
-- `shortest_monster_delivery`:
-  - Time:
-  - Space:
-  - Why:
+Validates the structure of a graph before pathfinding.
 
-## Edge-Case Checklist
+```python
+validate_haunted_map(HAUNTED_CITY)  # passes silently if valid
+```
 
-Check the cases your code handles.
+**Raises `ValueError` if:**
+- `graph` is not a dictionary
+- Any node's value is not a dictionary
+- Any neighbor is not a node in the graph
+- Any edge weight is not a positive number
 
-- [ ] start equals target
-- [ ] target is unreachable
-- [ ] start node is missing
-- [ ] target node is missing
-- [ ] node has no outgoing edges
-- [ ] graph contains cycles
-- [ ] tied shortest paths
-- [ ] negative edge weight
-- [ ] zero edge weight
-- [ ] neighbor not listed as a graph node
+---
 
-## Tests I Added
+### `monster_delivery_costs(graph, start) → dict[str, float]`
 
-List any tests you added beyond the starter tests.
+Returns the **cheapest cost from `start` to every node** in the graph.
 
-- 
-- 
-- 
+```python
+costs = monster_delivery_costs(HAUNTED_CITY, "Crypt Kitchen")
+# {
+#   "Crypt Kitchen":  0,
+#   "Fog Alley":      2,
+#   "Bone Bridge":    5,
+#   "Moon Bridge":    3,
+#   "Goblin Market":  6,
+#   "Werewolf Den":   8,
+#   "Vampire Tower": 10,
+# }
+```
 
-## Assistance & Sources
+Unreachable nodes are returned with a cost of `math.inf`.
 
-AI used? Y/N:
+**Raises `ValueError`** if the graph is invalid or `start` is not in the graph.
 
-If yes, what did it help with?
+---
 
-- 
+### `shortest_monster_delivery(graph, start, target) → tuple[float, list[str]]`
 
-Other sources used:
+Returns the **cheapest cost and the full path** from `start` to `target`.
 
-- 
+```python
+cost, path = shortest_monster_delivery(HAUNTED_CITY, "Crypt Kitchen", "Vampire Tower")
+# (10, ["Crypt Kitchen", "Fog Alley", "Moon Bridge", "Werewolf Den", "Vampire Tower"])
+```
 
-## Notes for Instructor
+| Scenario | Returns |
+|---|---|
+| Normal reachable path | `(cost, [start, ..., target])` |
+| `start == target` | `(0, [start])` |
+| `start` or `target` not in graph | `(inf, [])` |
+| Target unreachable | `(inf, [])` |
 
-Anything you want me to know before grading?
+---
 
-- 
+### `best_next_monster_stop(graph, start, targets) → tuple[str, float]`
+
+*(Stretch challenge)* Given a list of candidate destinations, returns the **reachable target with the lowest cost** from `start`.
+
+```python
+best, cost = best_next_monster_stop(
+    HAUNTED_CITY,
+    "Crypt Kitchen",
+    ["Vampire Tower", "Goblin Market", "Werewolf Den"]
+)
+# ("Goblin Market", 6)
+```
+
+- Ignores unreachable targets
+- Tie-breaking: returns the target that appears **first** in the `targets` list
+- Returns `("", math.inf)` if no target is reachable
+
+## Algorithm Notes
+
+All pathfinding functions implement **Dijkstra's algorithm** with:
+
+- **Min-heap** (`heapq`) for O(log n) priority queue operations
+- **Lazy deletion** — stale heap entries are skipped via the `current_cost > distances[node]` guard
+- **Early exit** in `shortest_monster_delivery` once the target node is settled
+- **Predecessor map** (`prev`) in `shortest_monster_delivery` for O(n) path reconstruction
+
+**Time complexity:** O((V + E) log V)  
+**Space complexity:** O(V + E)
+
+## Running the Code
+
+```bash
+python solution.py
+```
+
+To experiment interactively:
+
+```python
+from solution import monster_delivery_costs, shortest_monster_delivery, HAUNTED_CITY
+
+costs = monster_delivery_costs(HAUNTED_CITY, "Crypt Kitchen")
+cost, path = shortest_monster_delivery(HAUNTED_CITY, "Crypt Kitchen", "Vampire Tower")
+print(f"Cost: {cost}, Path: {' → '.join(path)}")
+```
